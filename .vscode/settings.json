@@ -1,0 +1,9 @@
+{
+    "terminal.integrated.env.linux": {
+        "PATH": "/home/binarium/.platformio/penv/bin:/home/binarium/.platformio/penv:/home/binarium/.local/bin:/home/binarium/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/usr/lib/jvm/default-java/bin",
+        "PLATFORMIO_CALLER": "vscode"
+    },
+    "files.associations": {
+        "array": "cpp"
+    }
+}
