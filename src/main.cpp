@@ -12,6 +12,8 @@
 char APssid[32] = {0}; //Arreglo para almacenar AP_SSID
 
 //Variables
+String ssid = "";
+String pass = "";
 String nfc = "";
 String key = "";
 unsigned int udpLocalPort = 2401;
@@ -22,6 +24,7 @@ WiFiUDP udp;
 
 //Declaracion de funciones
 String getMemoryData();
+String saveMemoryData(String data);
 void handleUDP();
 void initWiFi();
 
@@ -39,6 +42,11 @@ void setup()
 
   //Inicializar WiFi
   initWiFi();
+
+  //Leer memoria
+  String readData = getMemoryData();
+  Serial.print("Datos leidos -> ");
+  Serial.println(readData);
 }
 
 //Funcion Loop
@@ -113,6 +121,39 @@ String getMemoryData()
   return "";
 }
 
+String saveMemoryData(String data)
+{
+  int addr = 0;
+
+  for (int i = 0; i < data.length(); i++)
+  {
+    //Escribir cada caracter
+    EEPROM.write(addr++, data.charAt(i));
+  }
+
+  //Agregar final de cadena
+  EEPROM.write(addr, 0);
+
+  //Hacer commit
+  EEPROM.commit();
+}
+
+/*** Servicios ***
+ * 
+ * Configurar dispositivo:
+ * Guarda la red a la que se conecta el dispositivo
+ * Valida que la llave sea valida, si no lo es,
+ * no se guardan los datos
+ * 
+ * {
+ *    "ssid":"AP_OFICINA",
+ *    "pass":"B1n4r1uM",
+ *    "llave":"2803269"
+ * }
+ * 
+ * 
+ * ******/
+
 void handleUDP()
 {
   //Buffer para almacenar respuesta 
@@ -142,17 +183,25 @@ void handleUDP()
       if (data.indexOf("COPACETIC") != -1)
       {
         //Es mensaje para buscar dispositivo
+        //Enviar una respuesta
+        udp.beginPacket(udp.remoteIP(), udp.remotePort());
+        //udp.write((uint8_t *)&replyBuffer, strlen(replyBuffer));
+        udp.write(APssid);
       }
       else
       {
+        //Guardar informacion
+        saveMemoryData(data);
+
         //Es un mensaje JSON
+        String response = "{\"response\":\"ok\", \"message\":\"Configuraciones WiFi recibidas\"}";
+        
+        //Enviar una respuesta
+        udp.beginPacket(udp.remoteIP(), udp.remotePort());
+        udp.write(response.c_str(), strlen(response.c_str()));
       }
     }
 
-    //Enviar una respuesta
-    udp.beginPacket(udp.remoteIP(), udp.remotePort());
-    //udp.write((uint8_t *)&replyBuffer, strlen(replyBuffer));
-    udp.write(APssid);
     udp.endPacket();
   }
 }
