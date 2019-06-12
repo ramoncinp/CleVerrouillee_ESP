@@ -5,7 +5,8 @@
 #include <WiFiUdp.h>
 
 #define LED 2
-#define LED_DELAY 250
+#define LED_DELAY_DISCONNECTED 150
+#define LED_DELAY_CONNECTED 500
 
 #define AP_NAME "LOCK"
 
@@ -19,6 +20,7 @@ String nfc = "";
 String llave = "";
 uint32_t chipId = 0;
 unsigned int udpLocalPort = 2401;
+unsigned int ledDelay = LED_DELAY_DISCONNECTED; 
 unsigned long timeRef;
 
 //Objetos
@@ -29,6 +31,7 @@ int handleRequest(String request);
 String getMemoryData();
 String saveMemoryData(String data);
 void handleUDP();
+void handleWifi();
 void initWiFi();
 void prepareMemoryData();
 void setMemoryData(String data);
@@ -45,21 +48,21 @@ void setup()
   //Inicializar EEPROM
   EEPROM.begin(512);
 
-  //Inicializar WiFi
-  initWiFi();
-
   //Leer memoria
   String readData = getMemoryData();
   if (readData != "")
   {
     setMemoryData(readData);
   }
+
+  //Inicializar WiFi
+  initWiFi();
 }
 
 //Funcion Loop
 void loop() 
 {
-  if (millis() - timeRef > LED_DELAY)
+  if (millis() - timeRef > ledDelay)
   {
     digitalWrite(LED, !digitalRead(LED));
     timeRef = millis();
@@ -68,10 +71,12 @@ void loop()
   //Manejar servidor UDP
   handleUDP();
 
+  //Manejar conexión WiFi
+  handleWifi();
+
   //Delay para estabilizacion 
   yield();
 }
-
 
 
 /******* DEFINICIÓN DE FUNCIONES *******/
@@ -333,6 +338,24 @@ void handleUDP()
   }
 }
 
+void handleWifi()
+{
+  static unsigned long timeRef;
+
+  if (millis() - timeRef > 1000)
+  {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      ledDelay = LED_DELAY_CONNECTED;
+    }
+    else
+    {
+      ledDelay = LED_DELAY_DISCONNECTED;
+    }
+    timeRef = millis();
+  }
+}
+
 void initWiFi()
 {
   //Limpiar configuraciones de WiFi
@@ -353,6 +376,17 @@ void initWiFi()
 
   //Inicializar UDP
   udp.begin(udpLocalPort);
+
+  //Conectarse a la red
+  if (ssid != "" && pass != "")
+  {
+    Serial.println("Conectandose a la red WiFi...");
+    Serial.print("SSID -> ");
+    Serial.println(ssid);
+    Serial.print("PASS -> ");
+    Serial.println(pass);
+    WiFi.begin(ssid.c_str(), pass.c_str());
+  }
 }
 
 /** Datos a almacenar en fomato JSON
