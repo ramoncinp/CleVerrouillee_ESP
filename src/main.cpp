@@ -52,7 +52,7 @@ void setup()
   pinMode(LED, OUTPUT);
   pinMode(LOCK_PIN, OUTPUT);
   pinMode(TAG_STA, INPUT);
-  digitalWrite(LOCK_PIN, HIGH);
+  digitalWrite(LOCK_PIN, LOW);
 
   //Inicializar Serial
   Serial.begin(9600);
@@ -643,18 +643,19 @@ void handlePin()
   //Si se pidió activar pero esta desactivado
   if (unlockPinFlg)
   {
-    if (digitalRead(LOCK_PIN) == HIGH)
+    if (digitalRead(LOCK_PIN) == LOW)
     {
       //Activar
-      digitalWrite(LOCK_PIN, LOW);
+      Serial.print("Activar!");
+      digitalWrite(LOCK_PIN, HIGH);
       timeRef = millis();
     }
     else
     {
       //Desactivar
-      if (millis() - timeRef > 8000)
+      if (millis() - timeRef > 2000)
       {
-        digitalWrite(LOCK_PIN, HIGH);  
+        digitalWrite(LOCK_PIN, LOW);  
         unlockPinFlg = false;
       }
     }
